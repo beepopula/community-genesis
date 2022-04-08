@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "base58": "^2.0.1",
+    "crypto-js": "^4.1.1",
+    "near-api-js": "^0.44.2"
+  }
+}
