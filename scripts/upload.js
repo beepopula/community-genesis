@@ -84,7 +84,7 @@ async function upload() {
     //console.log(code_info.code.slice(start, end))
     let code = code_info.code.slice(start, end)
     let arr = [...code]
-    await contract.addTokenCode("normal", arr)
+    await contract.addCode("normal", arr)
     sleep(1000)
   }
   fs.writeFileSync("index", '0')
