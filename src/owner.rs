@@ -28,7 +28,7 @@ impl CommunityGenesis {
         env::storage_remove(token_type.as_bytes());
     }
 
-    pub fn add_code_code(&mut self, token_type: String, code: Vec<u8>) {
+    pub fn add_code(&mut self, token_type: String, code: Vec<u8>) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
         let old_code = env::storage_read(token_type.as_bytes()).unwrap_or(Vec::new());
         env::storage_write(token_type.as_bytes(), &[old_code, code].concat());

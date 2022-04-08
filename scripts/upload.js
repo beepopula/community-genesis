@@ -33,9 +33,9 @@ class Contract {
       // Initializing our contract APIs by contract name and configuration.
       this.contract = await new nearAPI.Contract(this.account, nearConfig.contractName, {
           // View methods are read-only – they don't modify the state, but usually return some value
-          viewMethods: ['get_deploy_actions'],
+          viewMethods: [],
           // Change methods can modify the state, but you don't receive the returned value when called
-          changeMethods: ['add_token_code'],
+          changeMethods: ['add_code_code'],
           // Sender is the account ID to initialize transactions.
           // getAccountId() will return empty string if user is still unauthorized
           sender: this.account
@@ -43,8 +43,8 @@ class Contract {
       this.provider = await new nearAPI.providers.JsonRpcProvider(nearConfig.nodeUrl);
     }
 
-    async addTokenCode(type, code) {
-      await this.contract.add_token_code({token_type: type, code: code}, GAS, 0)
+    async addCode(type, code) {
+      await this.contract.add_code_code({token_type: type, code: code}, GAS, 0)
     }
   
   }
@@ -68,7 +68,7 @@ function sleep(ms) {
 async function upload() {
   let contract = new Contract()
   await contract.init()
-  let code_info = getCodeInfo("../res/fungible_token.wasm")
+  let code_info = getCodeInfo("../res/normal_community.wasm")
   let index = 0
   if (fs.existsSync("index")) {
     index = Number(fs.readFileSync("index"))

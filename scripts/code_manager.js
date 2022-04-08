@@ -44,12 +44,12 @@ class Contract {
       this.provider = await new nearAPI.providers.JsonRpcProvider(nearConfig.nodeUrl);
     }
 
-    async addTokenType(type, length, hash) {
-      await this.contract.add_token_type({token_type: type, length: length, hash: hash}, GAS, 0)
+    async addCommunityType(type, length, hash) {
+      await this.contract.add_code_type({token_type: type, length: length, hash: hash}, GAS, 0)
     }
 
-    async delTokenType(type) {
-      await this.contract.del_token_type({token_type: type})
+    async delCommunityType(type) {
+      await this.contract.del_code_type({token_type: type})
     }
   
   }
@@ -60,13 +60,13 @@ async function addType() {
     let file = fs.readFileSync("../res/normal_community.wasm")
     let length = file.length
     let hash = sha256(file).toString()
-    contract.addTokenType("normal", length, hash)
+    contract.addCommunityType("normal", length, hash)
 }
 
 async function delType() {
   let contract = new Contract()
   await contract.init()
-  await contract.delTokenType("normal")
+  await contract.delCommunityType("normal")
 }
 
 addType()
