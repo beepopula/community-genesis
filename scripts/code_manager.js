@@ -17,7 +17,7 @@ class Contract {
   
     async init() {
 
-      let keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore("~/.near-credentials");
+      let keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore("~/.near-credentials/testnet/");
 
       // const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(KEY_PATH);
       // const keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore("/home/bhc/.near-credentials");
