@@ -36,7 +36,7 @@ class Contract {
           // View methods are read-only – they don't modify the state, but usually return some value
           viewMethods: [],
           // Change methods can modify the state, but you don't receive the returned value when called
-          changeMethods: ['add_token_type', 'del_token_type'],
+          changeMethods: ['add_code_type', 'del_code_type'],
           // Sender is the account ID to initialize transactions.
           // getAccountId() will return empty string if user is still unauthorized
           sender: this.account
