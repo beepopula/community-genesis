@@ -45,11 +45,11 @@ class Contract {
     }
 
     async addCommunityType(type, length, hash) {
-      await this.contract.add_code_type({token_type: type, length: length, hash: hash}, GAS, 0)
+      await this.contract.add_code_type({community_type: type, length: length, hash: hash}, GAS, 0)
     }
 
     async delCommunityType(type) {
-      await this.contract.del_code_type({token_type: type})
+      await this.contract.del_code_type({community_type: type})
     }
   
   }
@@ -71,5 +71,4 @@ async function delType() {
 
 addType()
 //delType()
-//mintToken()
 //del()

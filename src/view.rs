@@ -6,8 +6,8 @@ impl CommunityGenesis {
 
     pub fn get_account_communities(&self, account_id: AccountId) -> Vec<AccountId> {
         let empty_vec: Vec<AccountId> = Vec::new();
-        let tokens = self.accounts.get(&account_id).unwrap_or(empty_vec);
-        tokens.clone()
+        let communities = self.accounts.get(&account_id).unwrap_or(empty_vec);
+        communities.clone()
     }
 
     pub fn get_communities(&self) -> Vec<AccountId> {

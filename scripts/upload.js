@@ -44,7 +44,7 @@ class Contract {
     }
 
     async addCode(type, code) {
-      await this.contract.add_code_code({token_type: type, code: code}, GAS, 0)
+      await this.contract.add_code_code({community_type: type, code: code}, GAS, 0)
     }
   
   }
