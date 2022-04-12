@@ -69,6 +69,12 @@ async function delType() {
   await contract.delCommunityType("normal")
 }
 
+async function checkHash() {
+  let file = fs.readFileSync("../res/normal_community.wasm")
+  let hash = bs58.encode(js_sha256.sha256.digest(file))
+  console.log(hash)
+}
+
 addType()
 //delType()
-//del()
+//checkHash()
