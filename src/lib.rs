@@ -76,6 +76,7 @@ pub struct OldCodeInfo {
 pub enum StorageKey{
     Communities,
     Codes,
+    NewCodes,
     Accounts
 }
 
@@ -98,27 +99,14 @@ impl CommunityGenesis {
     pub fn migrate() -> Self {
         let old_contract: OldCommunityGenesis = env::state_read().unwrap();
         assert!(old_contract.owner_id == env::predecessor_account_id(), "owner only");
-        let mut buffer: HashMap<String, OldCodeInfo> = HashMap::new();
-        for (key, value) in old_contract.codes.iter() {
-            buffer.insert(key.clone(), value.clone());
-        }
-        let mut new_contract = CommunityGenesis {
-            codes: UnorderedMap::new(StorageKey::Codes),
+        let new_contract = CommunityGenesis {
+            codes: UnorderedMap::new(StorageKey::NewCodes),
             owner_id: old_contract.owner_id,
             communities: old_contract.communities,
             accounts: old_contract.accounts,
             public_key: old_contract.public_key,
             account_storage_usage: old_contract.account_storage_usage
         };
-        let hash: CryptoHash = env::random_seed().try_into().unwrap();
-        for (key, value) in buffer.iter() {
-            let code_info = CodeInfo { 
-                hash: Base58CryptoHash::from(hash), 
-                length: value.length, 
-                storage_deposit: value.storage_deposit
-            };
-            new_contract.codes.insert(&key, &code_info);
-        }
         new_contract
     }
 
@@ -127,11 +115,12 @@ impl CommunityGenesis {
         let sender_id = env::predecessor_account_id();
         let code_info = self.codes.get(&community_type).unwrap();
         let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
+        let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
 
         Promise::new(contract_id.clone())
         .create_account()
         .transfer(u128::from(code_info.storage_deposit) + self.account_storage_usage as u128 * env::storage_byte_cost())
-        .deploy_contract(env::storage_read(community_type.as_bytes()).unwrap())
+        .deploy_contract(env::storage_read(&hash).unwrap())
         .function_call("new".into(), json!({
             "owner_id": sender_id,
             "public_key": self.public_key,
@@ -142,7 +131,6 @@ impl CommunityGenesis {
                 "contract_id": contract_id,
                 "community_type": community_type,
                 "owner_id": sender_id,
-                "code_hash": code_info.hash
             }).to_string().into(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3)
         );
     }
@@ -152,8 +140,11 @@ impl CommunityGenesis {
         let sender_id = env::predecessor_account_id();
         let community = self.communities.get(&contract_id).unwrap();
         assert!(sender_id == community.owner_id, "not owner");
+        let code_info = self.codes.get(&community_type).unwrap();
+        let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
+
         let promise = Promise::new(contract_id.clone())
-        .deploy_contract(env::storage_read(community_type.as_bytes()).unwrap());
+        .deploy_contract(env::storage_read(&hash).unwrap());
         let promise = match args {
             Some(v) => {
                 promise.function_call("migrate".to_string(), v.into_bytes(), 0, (env::prepaid_gas() - env::used_gas()) / 3)

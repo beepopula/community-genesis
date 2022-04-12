@@ -23,14 +23,25 @@ impl CommunityGenesis {
 
     pub fn del_code_type(&mut self, community_type: String) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
-        assert!(self.codes.get(&community_type).is_some(), "not exist");
+        //assert!(self.codes.get(&community_type).is_some(), "not exist");
         self.codes.remove(&community_type);
-        env::storage_remove(community_type.as_bytes());
+        
     }
 
-    pub fn add_code(&mut self, community_type: String, code: Vec<u8>) {
+    pub fn del_code_hash(&mut self, hash: Base58CryptoHash) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
-        let old_code = env::storage_read(community_type.as_bytes()).unwrap_or(Vec::new());
-        env::storage_write(community_type.as_bytes(), &[old_code, code].concat());
+        let hash = CryptoHash::from(hash).to_vec();
+        env::storage_remove(&hash);
     }
+}
+
+#[no_mangle]
+pub extern "C" fn add_code() {
+    env::setup_panic_hook();
+    let contract: CommunityGenesis = env::state_read().unwrap();
+    assert!(contract.owner_id == env::predecessor_account_id(), "contract owner only");
+    let input = env::input().unwrap();
+    let hash = env::sha256(&input);
+    env::storage_write(&hash, &input);
+    env::value_return(&hash);
 }
