@@ -3,8 +3,10 @@ const nearAPI = require("near-api-js");
 const getConfig = require("./config.js");
 const nearConfig = getConfig("development");
 const fs = require('fs');
-const transaction = require("near-api-js/lib/transaction.js")
+const {transaction, functionCall} = require("near-api-js/lib/transaction.js")
 const GAS = "300000000000000";
+import { functionCall} from "near-api-js/lib/transaction.js";
+import { signAndSendTransaction, getTxData } from '../utils/transaction';
 
 class Contract {
 
@@ -36,8 +38,8 @@ class Contract {
     }
 
     async addCode(code) {
-      const action = [functionCall("add_code", code, GAS)];
-      await signAndSendTransaction(contractId, account, action)
+      const actions = [functionCall("add_code", code, GAS)];
+      await this.account.signAndSendTransaction({receiverId: nearConfig.contractName, actions: actions})
     }
   
   }
