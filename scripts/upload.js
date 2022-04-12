@@ -35,7 +35,7 @@ class Contract {
           // View methods are read-only – they don't modify the state, but usually return some value
           viewMethods: [],
           // Change methods can modify the state, but you don't receive the returned value when called
-          changeMethods: ['add_code_code'],
+          changeMethods: ['add_code'],
           // Sender is the account ID to initialize transactions.
           // getAccountId() will return empty string if user is still unauthorized
           sender: this.account
@@ -44,7 +44,7 @@ class Contract {
     }
 
     async addCode(type, code) {
-      await this.contract.add_code_code({community_type: type, code: code}, GAS, 0)
+      await this.contract.add_code({community_type: type, code: code}, GAS, 0)
     }
   
   }
