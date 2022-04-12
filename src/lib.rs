@@ -1,14 +1,17 @@
 
 
+use std::borrow::Borrow;
+use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::thread::AccessError;
 
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::{Base58CryptoHash, U128};
+use near_sdk::serde::de::IntoDeserializer;
 use near_sdk::serde::{Serialize, Deserialize};
 use near_sdk::serde_json::{json, self};
-use near_sdk::{env, near_bindgen, AccountId, log, bs58, PanicOnDefault, Promise, BorshStorageKey};
+use near_sdk::{env, near_bindgen, AccountId, log, bs58, PanicOnDefault, Promise, BorshStorageKey, CryptoHash};
 use near_sdk::collections::{LookupMap, UnorderedMap, Vector};
 
 
@@ -29,6 +32,17 @@ pub struct CommunityGenesis {
     account_storage_usage: u128
 }
 
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct OldCommunityGenesis {
+    owner_id: AccountId,
+    communities: UnorderedMap<AccountId, Community>,
+    codes: UnorderedMap<String, OldCodeInfo>,
+    accounts: UnorderedMap<AccountId, Vec<AccountId>>,
+    public_key: String,
+    account_storage_usage: u128
+}
+
 #[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 #[serde(crate = "near_sdk::serde")]
 #[derive(Debug)]
@@ -44,6 +58,15 @@ pub struct Community {
 #[derive(Debug, Clone)]
 pub struct CodeInfo {
     hash: Base58CryptoHash,
+    length: u32,
+    storage_deposit: U128
+}
+
+#[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
+#[serde(crate = "near_sdk::serde")]
+#[derive(Debug, Clone)]
+pub struct OldCodeInfo {
+    hash: String,
     length: u32,
     storage_deposit: U128
 }
@@ -69,6 +92,34 @@ impl CommunityGenesis {
             public_key,
             account_storage_usage: 128
         }
+    }
+
+    #[init(ignore_state)]
+    pub fn migrate() -> Self {
+        let old_contract: OldCommunityGenesis = env::state_read().unwrap();
+        assert!(old_contract.owner_id == env::predecessor_account_id(), "owner only");
+        let mut buffer: HashMap<String, OldCodeInfo> = HashMap::new();
+        for (key, value) in old_contract.codes.iter() {
+            buffer.insert(key.clone(), value.clone());
+        }
+        let mut new_contract = CommunityGenesis {
+            codes: UnorderedMap::new(StorageKey::Codes),
+            owner_id: old_contract.owner_id,
+            communities: old_contract.communities,
+            accounts: old_contract.accounts,
+            public_key: old_contract.public_key,
+            account_storage_usage: old_contract.account_storage_usage
+        };
+        let hash: CryptoHash = env::random_seed().try_into().unwrap();
+        for (key, value) in buffer.iter() {
+            let code_info = CodeInfo { 
+                hash: Base58CryptoHash::from(hash), 
+                length: value.length, 
+                storage_deposit: value.storage_deposit
+            };
+            new_contract.codes.insert(&key, &code_info);
+        }
+        new_contract
     }
 
     #[payable]

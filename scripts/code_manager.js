@@ -3,8 +3,8 @@ const nearAPI = require("near-api-js");
 const getConfig = require("./config.js");
 const nearConfig = getConfig("development");
 const fs = require('fs');
-const sha256 = require("crypto-js/sha256")
-const base58 = require("base58")
+const js_sha256 = require("js-sha256")
+const bs58 = require("bs58")
 const GAS = "300000000000000";
 
 class Contract {
@@ -59,7 +59,7 @@ async function addType() {
     await contract.init()
     let file = fs.readFileSync("../res/normal_community.wasm")
     let length = file.length
-    let hash = sha256(file).toString()
+    let hash = bs58.encode(js_sha256.sha256.digest(file))
     contract.addCommunityType("normal", length, hash)
 }
 
