@@ -1,4 +1,4 @@
-const CONTRACT_NAME = 'dev-1649783326811-29252684682371'//'community-genesis.bhc8521.testnet'
+const CONTRACT_NAME = 'community-genesis.bhc8521.testnet'
 
 function getConfig(env) {
   switch (env) {
