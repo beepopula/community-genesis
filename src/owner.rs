@@ -33,6 +33,11 @@ impl CommunityGenesis {
         let hash = CryptoHash::from(hash).to_vec();
         env::storage_remove(&hash);
     }
+
+    pub fn del_storage(&mut self, key: String) -> bool {
+        let result = env::storage_remove(&key.as_bytes());
+        result
+    }
 }
 
 #[no_mangle]

@@ -144,7 +144,7 @@ impl CommunityGenesis {
         let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
 
         let promise = Promise::new(contract_id.clone())
-        .deploy_contract(env::storage_read(&hash).unwrap());
+        .function_call("upgrade".to_string(), env::storage_read(&hash).unwrap(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3);
         let promise = match args {
             Some(v) => {
                 promise.function_call("migrate".to_string(), v.into_bytes(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
