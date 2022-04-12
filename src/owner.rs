@@ -12,7 +12,7 @@ impl CommunityGenesis {
         self.public_key = public_key;
     }
 
-    pub fn add_code_type(&mut self, community_type: String, length: u32, hash: String) {
+    pub fn add_code_type(&mut self, community_type: String, length: u32, hash: Base58CryptoHash) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
         self.codes.insert(&community_type, &CodeInfo {
             length: length,

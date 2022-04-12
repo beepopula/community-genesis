@@ -35,14 +35,15 @@ pub struct CommunityGenesis {
 pub struct Community {
     contract_id: AccountId,
     owner_id: AccountId,
-    community_type: String
+    community_type: String,
+    code_hash: Base58CryptoHash
 }
 
 #[derive(Serialize, Deserialize, BorshDeserialize, BorshSerialize)]
 #[serde(crate = "near_sdk::serde")]
 #[derive(Debug, Clone)]
 pub struct CodeInfo {
-    hash: String,
+    hash: Base58CryptoHash,
     length: u32,
     storage_deposit: U128
 }
@@ -89,8 +90,27 @@ impl CommunityGenesis {
             .function_call("on_add_community".into(), json!({
                 "contract_id": contract_id,
                 "community_type": community_type,
-                "owner_id": sender_id
+                "owner_id": sender_id,
+                "code_hash": code_info.hash
             }).to_string().into(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3)
+        );
+    }
+
+    #[payable]
+    pub fn update_community(&mut self, contract_id: AccountId, community_type: String, args:Option<String>) {
+        let promise = Promise::new(contract_id.clone())
+        .deploy_contract(env::storage_read(community_type.as_bytes()).unwrap());
+        let promise = match args {
+            Some(v) => {
+                promise.function_call("migrate".to_string(), v.into_bytes(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
+            },
+            None => promise
+        };
+        promise.then(
+            Promise::new(env::current_account_id()).function_call("on_update_community".to_string(), json!({
+                "contract_id": contract_id,
+                "community_type": community_type
+            }).to_string().as_bytes().to_vec(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3)
         );
     }
 }

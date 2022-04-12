@@ -227,9 +227,7 @@ dependencies = [
 name = "community-genesis"
 version = "0.1.0"
 dependencies = [
- "base64 0.13.0",
  "near-sdk",
- "sha2",
 ]
 
 [[package]]
