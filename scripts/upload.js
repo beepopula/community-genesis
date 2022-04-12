@@ -31,20 +31,13 @@ class Contract {
       this.account = await near.account("bhc8521.testnet");
   
       // Initializing our contract APIs by contract name and configuration.
-      this.contract = await new nearAPI.Contract(this.account, nearConfig.contractName, {
-          // View methods are read-only – they don't modify the state, but usually return some value
-          viewMethods: [],
-          // Change methods can modify the state, but you don't receive the returned value when called
-          changeMethods: ['add_code'],
-          // Sender is the account ID to initialize transactions.
-          // getAccountId() will return empty string if user is still unauthorized
-          sender: this.account
-      });
+
       this.provider = await new nearAPI.providers.JsonRpcProvider(nearConfig.nodeUrl);
     }
 
     async addCode(code) {
-      await this.contract.add_code(code, GAS, 0)
+      const action = [functionCall("add_code", code, GAS)];
+      await signAndSendTransaction(contractId, account, action)
     }
   
   }
@@ -94,7 +87,7 @@ async function upload() {
   let contract = new Contract()
   await contract.init()
   let file = fs.readFileSync("../res/normal_community.wasm")
-  await contract.addCode("normal", file)
+  await contract.addCode(file)
 }
 
 upload()
