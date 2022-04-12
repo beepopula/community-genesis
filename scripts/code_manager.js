@@ -75,6 +75,6 @@ async function checkHash() {
   console.log(hash)
 }
 
-addType()
+//addType()
 //delType()
-//checkHash()
+checkHash()
