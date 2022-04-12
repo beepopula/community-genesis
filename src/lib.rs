@@ -98,6 +98,9 @@ impl CommunityGenesis {
 
     #[payable]
     pub fn update_community(&mut self, contract_id: AccountId, community_type: String, args:Option<String>) {
+        let sender_id = env::predecessor_account_id();
+        let community = self.communities.get(&contract_id).unwrap();
+        assert!(sender_id == community.owner_id, "not owner");
         let promise = Promise::new(contract_id.clone())
         .deploy_contract(env::storage_read(community_type.as_bytes()).unwrap());
         let promise = match args {
