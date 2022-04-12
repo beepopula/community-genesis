@@ -3,9 +3,8 @@ const nearAPI = require("near-api-js");
 const getConfig = require("./config.js");
 const nearConfig = getConfig("development");
 const fs = require('fs');
-const {transaction, functionCall} = require("near-api-js/lib/transaction.js")
+const {functionCall} = require("near-api-js/lib/transaction.js")
 const GAS = "300000000000000";
-import { functionCall} from "near-api-js/lib/transaction.js";
 
 class Contract {
 
