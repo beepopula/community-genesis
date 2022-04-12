@@ -69,6 +69,6 @@ async function delType() {
   await contract.delCommunityType("normal")
 }
 
-//addType()
-delType()
+addType()
+//delType()
 //del()
