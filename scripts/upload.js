@@ -86,7 +86,7 @@ class Contract {
 async function upload() {
   let contract = new Contract()
   await contract.init()
-  let file = fs.readFileSync("../res/normal_community.wasm")
+  let file = fs.readFileSync("../res/test.wasm")
   await contract.addCode(file)
 }
 
