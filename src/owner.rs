@@ -23,7 +23,8 @@ impl CommunityGenesis {
 
     pub fn del_code_type(&mut self, community_type: String) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
-        //assert!(self.codes.get(&community_type).is_some(), "not exist");
+        let code = self.codes.get(&community_type).unwrap();
+        env::storage_remove(&CryptoHash::from(code.hash).to_vec());
         self.codes.remove(&community_type);
         
     }
@@ -32,11 +33,6 @@ impl CommunityGenesis {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
         let hash = CryptoHash::from(hash).to_vec();
         env::storage_remove(&hash);
-    }
-
-    pub fn del_storage(&mut self, key: String) -> bool {
-        let result = env::storage_remove(&key.as_bytes());
-        result
     }
 }
 
