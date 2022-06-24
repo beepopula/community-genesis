@@ -14,6 +14,9 @@ impl CommunityGenesis {
 
     pub fn add_code_type(&mut self, community_type: String, length: u32, hash: Base58CryptoHash) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
+        if let Some(code) = self.codes.get(&community_type) {
+            env::storage_remove(&CryptoHash::from(code.hash).to_vec());
+        }
         self.codes.insert(&community_type, &CodeInfo {
             length: length,
             hash: hash,
