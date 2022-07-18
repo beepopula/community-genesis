@@ -38,6 +38,7 @@ impl CommunityGenesis {
         env::storage_remove(&hash);
     }
 
+    #[payable]
     pub fn deploy_community_by_owner(&mut self, name: String, community_type: String, creator_id: AccountId, args: Option<String>) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
         let code_info = self.codes.get(&community_type).unwrap();
