@@ -14,6 +14,8 @@ use near_sdk::serde_json::{json, self};
 use near_sdk::{env, near_bindgen, AccountId, log, bs58, PanicOnDefault, Promise, BorshStorageKey, CryptoHash};
 use near_sdk::collections::{LookupMap, UnorderedMap, Vector};
 
+use crate::utils::refund_extra_storage_deposit;
+
 
 pub mod utils;
 pub mod resolver;
@@ -122,7 +124,7 @@ impl CommunityGenesis {
 
         Promise::new(contract_id.clone())
         .create_account()
-        .transfer(u128::from(code_info.storage_deposit) + self.account_storage_usage as u128 * env::storage_byte_cost())
+        .transfer(u128::from(code_info.storage_deposit))
         .deploy_contract(env::storage_read(&hash).unwrap())
         .function_call("new".into(), json!({
             "owner_id": sender_id,
@@ -134,8 +136,9 @@ impl CommunityGenesis {
                 "contract_id": contract_id,
                 "community_type": community_type,
                 "owner_id": sender_id,
-            }).to_string().into(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3)
+            }).to_string().into(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
         );
+        refund_extra_storage_deposit(0, storage_cost);
     }
 
     #[payable]
@@ -146,12 +149,12 @@ impl CommunityGenesis {
         let code_info = self.codes.get(&community_type).unwrap();
         let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
 
-        let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit);
+        //let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit);
 
-        assert!(env::attached_deposit() > storage_cost, "not enough deposit");
+        //assert!(env::attached_deposit() > storage_cost, "not enough deposit");
 
         let promise = Promise::new(contract_id.clone())
-        .function_call("upgrade".to_string(), env::storage_read(&hash).unwrap(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3);
+        .function_call("upgrade".to_string(), env::storage_read(&hash).unwrap(), u128::from(code_info.storage_deposit), (env::prepaid_gas() - env::used_gas()) / 3);
         let promise = match args {
             Some(v) => {
                 promise.function_call("migrate".to_string(), v.into_bytes(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
@@ -162,7 +165,7 @@ impl CommunityGenesis {
             Promise::new(env::current_account_id()).function_call("on_update_community".to_string(), json!({
                 "contract_id": contract_id,
                 "community_type": community_type
-            }).to_string().as_bytes().to_vec(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3)
+            }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
         );
     }
 }
