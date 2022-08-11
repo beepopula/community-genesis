@@ -154,10 +154,10 @@ impl CommunityGenesis {
         //assert!(env::attached_deposit() > storage_cost, "not enough deposit");
 
         let promise = Promise::new(contract_id.clone())
-        .function_call("upgrade".to_string(), env::storage_read(&hash).unwrap(), u128::from(code_info.storage_deposit), (env::prepaid_gas() - env::used_gas()) / 3);
+        .function_call("upgrade".to_string(), env::storage_read(&hash).unwrap(), u128::from(code_info.storage_deposit), (env::prepaid_gas() - env::used_gas()) / 4);
         let promise = match args {
             Some(v) => {
-                promise.function_call("migrate".to_string(), v.into_bytes(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
+                promise.function_call("migrate".to_string(), v.into_bytes(), 0, (env::prepaid_gas() - env::used_gas()) / 4)
             },
             None => promise
         };
@@ -165,7 +165,7 @@ impl CommunityGenesis {
             Promise::new(env::current_account_id()).function_call("on_update_community".to_string(), json!({
                 "contract_id": contract_id,
                 "community_type": community_type
-            }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
+            }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 4)
         );
     }
 }
