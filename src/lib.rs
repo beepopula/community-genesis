@@ -82,7 +82,7 @@ pub enum StorageKey{
     Accounts
 }
 
-const EXTRA_STORAGE_COST: u128 = 2_000_000_000_000_000_000_000_000;
+const EXTRA_STORAGE_COST: u128 = 20_000_000_000_000_000_000_000_000;
 
 #[near_bindgen]
 impl CommunityGenesis {
