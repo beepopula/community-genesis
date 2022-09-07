@@ -114,33 +114,33 @@ impl CommunityGenesis {
         new_contract
     }
 
-    #[payable]
-    pub fn deploy_community(&mut self, name: String, community_type: String, args: Option<String>) {
-        let sender_id = env::predecessor_account_id();
-        let code_info = self.codes.get(&community_type).unwrap();
-        let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
-        let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
-        let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST;
+    // #[payable]
+    // pub fn deploy_community(&mut self, name: String, community_type: String, args: Option<String>) {
+    //     let sender_id = env::predecessor_account_id();
+    //     let code_info = self.codes.get(&community_type).unwrap();
+    //     let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
+    //     let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
+    //     let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST;
 
-        assert!(env::attached_deposit() > storage_cost, "not enough deposit");
+    //     assert!(env::attached_deposit() > storage_cost, "not enough deposit");
 
-        Promise::new(contract_id.clone())
-        .create_account()
-        .transfer(u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST)
-        .deploy_contract(env::storage_read(&hash).unwrap())
-        .function_call("new".into(), json!({
-            "owner_id": sender_id,
-            "public_key": self.public_key,
-            "args": args 
-        }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 3).then(
-            Promise::new(env::current_account_id())
-            .function_call("on_add_community".into(), json!({
-                "contract_id": contract_id,
-                "community_type": community_type,
-                "owner_id": sender_id,
-            }).to_string().into(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
-        );
-    }
+    //     Promise::new(contract_id.clone())
+    //     .create_account()
+    //     .transfer(u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST)
+    //     .deploy_contract(env::storage_read(&hash).unwrap())
+    //     .function_call("new".into(), json!({
+    //         "owner_id": sender_id,
+    //         "public_key": self.public_key,
+    //         "args": args 
+    //     }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 3).then(
+    //         Promise::new(env::current_account_id())
+    //         .function_call("on_add_community".into(), json!({
+    //             "contract_id": contract_id,
+    //             "community_type": community_type,
+    //             "owner_id": sender_id,
+    //         }).to_string().into(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
+    //     );
+    // }
 
     #[payable]
     pub fn update_community(&mut self, contract_id: AccountId, community_type: String, args:Option<String>) {
