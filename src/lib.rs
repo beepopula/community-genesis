@@ -82,6 +82,8 @@ pub enum StorageKey{
     Accounts
 }
 
+const EXTRA_STORAGE_COST: u128 = 2_000_000_000_000_000_000_000_000;
+
 #[near_bindgen]
 impl CommunityGenesis {
 
@@ -118,13 +120,13 @@ impl CommunityGenesis {
         let code_info = self.codes.get(&community_type).unwrap();
         let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
         let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
-        let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit);
+        let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST;
 
         assert!(env::attached_deposit() > storage_cost, "not enough deposit");
 
         Promise::new(contract_id.clone())
         .create_account()
-        .transfer(u128::from(code_info.storage_deposit))
+        .transfer(u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST)
         .deploy_contract(env::storage_read(&hash).unwrap())
         .function_call("new".into(), json!({
             "owner_id": sender_id,
@@ -138,7 +140,6 @@ impl CommunityGenesis {
                 "owner_id": sender_id,
             }).to_string().into(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
         );
-        refund_extra_storage_deposit(0, storage_cost);
     }
 
     #[payable]
