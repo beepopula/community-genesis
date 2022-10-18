@@ -3,6 +3,7 @@
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
+use std::hash::Hash;
 use std::str::FromStr;
 use std::thread::AccessError;
 
@@ -30,7 +31,7 @@ pub struct CommunityGenesis {
     communities: UnorderedMap<AccountId, Community>,
     codes: UnorderedMap<String, CodeInfo>,
     accounts: UnorderedMap<AccountId, Vec<AccountId>>,
-    public_key: String,
+    args: HashMap<String, String>,
     account_storage_usage: u128
 }
 
@@ -88,19 +89,19 @@ const EXTRA_STORAGE_COST: u128 = 2_000_000_000_000_000_000_000_000;
 impl CommunityGenesis {
 
     #[init]
-    pub fn new(public_key: String) -> Self {
+    pub fn new(args: HashMap<String, String>) -> Self {
         Self {
             owner_id: env::predecessor_account_id(),
             communities: UnorderedMap::new(StorageKey::Communities),
             codes: UnorderedMap::new(StorageKey::Codes),
             accounts: UnorderedMap::new(StorageKey::Accounts),
-            public_key,
+            args,
             account_storage_usage: 128
         }
     }
 
     #[init(ignore_state)]
-    pub fn migrate() -> Self {
+    pub fn migrate(args: HashMap<String, String>) -> Self {
         let old_contract: OldCommunityGenesis = env::state_read().unwrap();
         assert!(old_contract.owner_id == env::predecessor_account_id(), "owner only");
         let new_contract = CommunityGenesis {
@@ -108,7 +109,7 @@ impl CommunityGenesis {
             owner_id: old_contract.owner_id,
             communities: old_contract.communities,
             accounts: old_contract.accounts,
-            public_key: old_contract.public_key,
+            args,
             account_storage_usage: old_contract.account_storage_usage
         };
         new_contract
@@ -143,7 +144,7 @@ impl CommunityGenesis {
     // }
 
     #[payable]
-    pub fn update_community(&mut self, contract_id: AccountId, community_type: String, args:Option<String>) {
+    pub fn update_community(&mut self, contract_id: AccountId, community_type: String, migrate: bool) {
         let sender_id = env::predecessor_account_id();
         let community = self.communities.get(&contract_id).unwrap();
         assert!(sender_id == community.owner_id || sender_id == self.owner_id, "not owner");
@@ -156,11 +157,13 @@ impl CommunityGenesis {
 
         let promise = Promise::new(contract_id.clone())
         .function_call("upgrade".to_string(), env::storage_read(&hash).unwrap(), u128::from(code_info.storage_deposit), (env::prepaid_gas() - env::used_gas()) / 4);
-        let promise = match args {
-            Some(v) => {
-                promise.function_call("migrate".to_string(), v.into_bytes(), 0, (env::prepaid_gas() - env::used_gas()) / 4)
+        let promise = match migrate {
+            true => {
+                promise.function_call("migrate".to_string(), json!({
+                    "args": json!(self.args)
+                }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 4)
             },
-            None => promise
+            false => promise
         };
         promise.then(
             Promise::new(env::current_account_id()).function_call("on_update_community".to_string(), json!({

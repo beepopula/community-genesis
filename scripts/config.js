@@ -17,7 +17,7 @@ function getConfig(env) {
     case 'testnet':
       return {
         networkId: 'testnet',
-        nodeUrl: 'https://rpc.testnet.near.org',
+        nodeUrl: 'http://13.214.203.20:3000/rpc',
         contractName: CONTRACT_NAME,
         walletUrl: 'https://wallet.testnet.near.org',
         helperUrl: 'https://helper.testnet.near.org',

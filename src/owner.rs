@@ -1,15 +1,17 @@
+use near_sdk::PublicKey;
+
 use crate::*;
 
 #[near_bindgen]
 impl CommunityGenesis {
-    pub fn get_public_key(&self) -> String {
-        self.public_key.clone()
+    pub fn get_args(&self) -> HashMap<String, String> {
+        self.args.clone()
     }
 
-    pub fn set_public_key(&mut self, public_key: String) {
+    pub fn set_args(&mut self, args: HashMap<String, String>) {
         let sender = env::predecessor_account_id();
         assert!(sender == self.owner_id, "owner only");
-        self.public_key = public_key;
+        self.args = args;
     }
 
     pub fn add_code_type(&mut self, community_type: String, length: u32, hash: Base58CryptoHash) {
@@ -38,8 +40,14 @@ impl CommunityGenesis {
         env::storage_remove(&hash);
     }
 
+    pub fn del_community(&mut self, contract_id: AccountId) {
+        assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
+        Promise::new(contract_id)
+        .function_call("del_contract".to_string(), json!({}).to_string().as_bytes().to_vec(), 1, (env::prepaid_gas() - env::used_gas()) / 2);
+    }
+
     #[payable]
-    pub fn deploy_community_by_owner(&mut self, name: String, community_type: String, creator_id: AccountId, args: Option<String>) {
+    pub fn deploy_community_by_owner(&mut self, name: String, community_type: String, creator_id: AccountId) {
         assert!(self.owner_id == env::predecessor_account_id(), "contract owner only");
         let code_info = self.codes.get(&community_type).unwrap();
         let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
@@ -50,12 +58,12 @@ impl CommunityGenesis {
 
         Promise::new(contract_id.clone())
         .create_account()
+        .add_full_access_key(PublicKey::from_str(&self.args.get("public_key").unwrap()).unwrap())
         .transfer(u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST)
         .deploy_contract(env::storage_read(&hash).unwrap())
         .function_call("new".into(), json!({
             "owner_id": creator_id,
-            "public_key": self.public_key,
-            "args": args 
+            "args": json!(self.args) 
         }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 3).then(
             Promise::new(env::current_account_id())
             .function_call("on_add_community".into(), json!({

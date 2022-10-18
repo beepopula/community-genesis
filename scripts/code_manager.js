@@ -36,7 +36,7 @@ class Contract {
 
     static async new(accountId) {
       console.log(accountId)
-      let keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore("/home/ubuntu/.near-credentials");
+      let keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore("/home/bhc/.near-credentials");
   
       const near = await nearAPI.connect({
         keyStore: keyStore,
