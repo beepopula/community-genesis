@@ -73,6 +73,31 @@ impl CommunityGenesis {
             }).to_string().into(), env::attached_deposit(), (env::prepaid_gas() - env::used_gas()) / 3)
         );
     }
+
+    #[payable]
+    pub fn update_community_by_owner(&mut self, contract_id: AccountId, community_type: String, migrate: bool) {
+        let sender_id = env::predecessor_account_id();
+        assert!(sender_id == self.owner_id, "not owner");
+        let code_info = self.codes.get(&community_type).unwrap();
+        let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
+
+        let promise = Promise::new(contract_id.clone())
+        .deploy_contract(env::storage_read(&hash).unwrap());
+        let promise = match migrate {
+            true => {
+                promise.function_call("migrate".to_string(), json!({
+                    "args": json!(self.args)
+                }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 4)
+            },
+            false => promise
+        };
+        promise.then(
+            Promise::new(env::current_account_id()).function_call("on_update_community".to_string(), json!({
+                "contract_id": contract_id,
+                "community_type": community_type
+            }).to_string().as_bytes().to_vec(), 0, (env::prepaid_gas() - env::used_gas()) / 4)
+        );
+    }
 }
 
 #[no_mangle]

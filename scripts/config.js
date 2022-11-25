@@ -1,4 +1,4 @@
-const CONTRACT_NAME = 'community-genesis2.bhc8521.testnet'
+const CONTRACT_NAME = 'community.metabuild-popula.testnet'
 
 function getConfig(env) {
   switch (env) {
@@ -17,7 +17,7 @@ function getConfig(env) {
     case 'testnet':
       return {
         networkId: 'testnet',
-        nodeUrl: 'http://13.214.203.20:3000/rpc',
+        nodeUrl: 'https://rpc.testnet.popula.io',
         contractName: CONTRACT_NAME,
         walletUrl: 'https://wallet.testnet.near.org',
         helperUrl: 'https://helper.testnet.near.org',

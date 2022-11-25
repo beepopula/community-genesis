@@ -22,3 +22,10 @@ pub(crate) fn refund_extra_storage_deposit(storage_used: StorageUsage, used_bala
         Promise::new(env::predecessor_account_id()).transfer(refund);
     }
 }
+
+pub(crate) fn get_env() -> String {
+    let contract_id = env::current_account_id().to_string();
+    let arr: Vec<String> = contract_id.split('.').map(|v| v.to_string()).collect();
+    let env = arr.get(arr.len() - 1).unwrap();
+    env.clone()
+}
