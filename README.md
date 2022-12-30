@@ -1,27 +1,27 @@
-community-genesis Smart Contract
+Popula Community Genesis
 ==================
 
-A [smart contract] written in [Rust] for an app initialized with [create-near-app]
-
-
-Quick Start
-===========
-
-Before you compile this code, you will need to install Rust with [correct target]
-
+Community code holder and factory.
 
 Exploring The Code
 ==================
 
-1. The main smart contract code lives in `src/lib.rs`. You can compile it with
-   the `./compile` script.
-2. Tests: You can run smart contract tests with the `./test` script. This runs
-   standard Rust tests using [cargo] with a `--nocapture` flag so that you
-   can see any debug info you print to the console.
+## Terminology
 
+* `owner_id`: The owner of this contract.
+* `args`: Some customized arguments to pass on communities.
+* `accounts`: Map of owner and communities.
+* `codes`: Variety types of community code.  
+* `account_storage_usage`: Estimation storage usage for a single account.
 
-  [smart contract]: https://docs.near.org/docs/develop/contracts/overview
-  [Rust]: https://www.rust-lang.org/
-  [create-near-app]: https://github.com/near/create-near-app
-  [correct target]: https://github.com/near/near-sdk-rs#pre-requisites
-  [cargo]: https://doc.rust-lang.org/book/ch01-03-hello-cargo.html
+## Function Specification
+
+### Deploy Community
+Users can deploy and update their own communities and also owner of this contract can deploy and update communities for others. 
+
+### Code and Arguments Management
+Owner have a set of methods to update different types of code and pass on arguments for initialization or migration of a community.
+
+## Build
+
+Run `RUSTFLAGS='-C link-arg=-s' cargo build --all --target wasm32-unknown-unknown --release` to build the project.
