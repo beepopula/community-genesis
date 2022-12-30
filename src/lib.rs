@@ -146,9 +146,9 @@ impl CommunityGenesis {
 
     #[payable]
     pub fn update_community(&mut self, contract_id: AccountId, community_type: String, migrate: bool) {
-        let sender_id = env::predecessor_account_id();
-        let community = self.communities.get(&contract_id).unwrap();
-        assert!(sender_id == community.owner_id || sender_id == self.owner_id, "not owner");
+        // let sender_id = env::predecessor_account_id();
+        // let community = self.communities.get(&contract_id).unwrap();
+        // assert!(sender_id == community.owner_id || sender_id == self.owner_id, "not owner");
         let code_info = self.codes.get(&community_type).unwrap();
         let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
 

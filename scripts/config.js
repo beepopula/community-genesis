@@ -1,4 +1,4 @@
-const CONTRACT_NAME = 'community.metabuild-popula.testnet'
+const CONTRACT_NAME = 'community-genesis2.bhc8521.testnet'
 
 function getConfig(env) {
   switch (env) {
