@@ -9,6 +9,11 @@ const GAS = "300000000000000";
 const yargs = require("yargs")
 const {functionCall} = require("near-api-js/lib/transaction.js")
 
+const homedir = require('os').homedir();
+const path = require('path');
+const CREDENTIALS_DIR = '.near-credentials';
+const credentialsPath = path.join(homedir, CREDENTIALS_DIR);
+
 class Contract {
 
     account
@@ -36,7 +41,7 @@ class Contract {
 
     static async new(accountId) {
       console.log(accountId)
-      let keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore("/home/bhc/.near-credentials");
+      let keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(credentialsPath);
   
       const near = await nearAPI.connect({
         keyStore: keyStore,
