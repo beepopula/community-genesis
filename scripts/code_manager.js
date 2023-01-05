@@ -34,12 +34,12 @@ class Contract {
 
     async addCode(code) {
       const actions = [functionCall("add_code", code, GAS)];
-      await this.account.signAndSendTransaction({receiverId: nearConfig.contractName, actions: actions})
+      await this.account.signAndSendTransaction({receiverId: this.contract.contractId, actions: actions})
     }
 
 
 
-    static async new(accountId) {
+    static async new(accountId, contractId) {
       console.log(accountId)
       let keyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(credentialsPath);
   
@@ -51,7 +51,7 @@ class Contract {
       const account = await near.account(accountId);
   
       // Initializing our contract APIs by contract name and configuration.
-      const contract = await new nearAPI.Contract(account, nearConfig.contractName, {
+      const contract = await new nearAPI.Contract(account, contractId, {
           // View methods are read-only – they don't modify the state, but usually return some value
           viewMethods: [],
           // Change methods can modify the state, but you don't receive the returned value when called
@@ -98,6 +98,12 @@ async function init() {
       describe: 'account ID',
       alias: 'a', 
       hidden: false,
+    },
+    contractId: {
+      type: 'string',
+      describe: 'contract ID',
+      alias: 'c', 
+      hidden: false,
     }
   })
   .command('set [type]', 'set a community type', (yargs) => {
@@ -107,7 +113,7 @@ async function init() {
       describe: 'community type'
     })
   }, async function (argv) {
-    let contract = await Contract.new(argv.accountId)
+    let contract = await Contract.new(argv.accountId, argv.contractId)
     addType(contract, argv.type)
   })
   .command('del [type]', 'del a community type', (yargs) => {
@@ -117,7 +123,7 @@ async function init() {
       describe: 'community type'
     })
   }, async function (argv) {
-    let contract = await Contract.new(argv.accountId)
+    let contract = await Contract.new(argv.accountId, argv.contractId)
     delType(contract, argv.type)
   })
   .argv
