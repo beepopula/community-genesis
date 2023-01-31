@@ -25,10 +25,24 @@ class Contract {
       this.near = near
     }
 
-    async upgrade(code, contractId) {
+    async upgrade(code, contractId, migrate = false) {
         await this.near.config.keyStore.setKey(nearConfig.networkId, contractId, this.signerKeyPair)
         const account = await this.near.account(contractId)
         await account.deployContract(code)
+        if (migrate) {
+          try {
+            await account.functionCall({
+              contractId,
+              methodName: "migrate", 
+              args: {}, 
+              gas: GAS, 
+              attachedDeposit: 0
+            })
+          } catch (e) {
+            return
+          }
+          
+        }
     }
 
 
@@ -49,7 +63,7 @@ class Contract {
   
   }
 
-async function upgrade(type, envId, signerId) {
+async function upgrade(type, envId, signerId, migrate = false) {
     let contract = await Contract.new(signerId)
     let file = fs.readFileSync(`../res/${type}.wasm`)
     const data = await rp.get(`https://${envId}.popula.io/api/v1/communities/rank?page=0&limit=100&sort=down`)
@@ -60,9 +74,9 @@ async function upgrade(type, envId, signerId) {
             continue
         }
         console.log('upgrading...  ' + communityId)
-        await contract.upgrade(file, communityId)
+        await contract.upgrade(file, communityId, migrate)
     }
-    // await contract.upgrade(file, "nepbotnepbotnepbot.community-genesis2.bhc8521.testnet")
+    // await contract.upgrade(file, "nepbotnepbotnepbot.community-genesis2.bhc8521.testnet", migrate)
 }
 
 async function init() {
@@ -77,11 +91,17 @@ async function init() {
       hidden: false,
     },
     envId: { 
-        type: 'string',
-        describe: 'env ID',
-        alias: 'e', 
-        hidden: false,
+      type: 'string',
+      describe: 'env ID',
+      alias: 'e', 
+      hidden: false,
     },
+    migrate: {
+      type: 'bool',
+      describe: 'migrate',
+      alias: 'm', 
+      hidden: false,
+    }
   })
   .command('upgrade [type]', 'set a community type', (yargs) => {
     yargs.positional('type', {
@@ -90,7 +110,7 @@ async function init() {
       describe: 'community type'
     })
   }, async function (argv) {
-    upgrade(argv.type, argv.envId, argv.accountId)
+    upgrade(argv.type, argv.envId, argv.accountId, argv.migrate)
   })
   .argv
 }
