@@ -78,10 +78,10 @@ async function delType(contract, type) {
   await contract.delCommunityType(type)
 }
 
-async function checkHash(contract, type) {
+async function getHash(type) {
   let file = fs.readFileSync(`../res/${type}.wasm`)
   let hash = bs58.encode(js_sha256.sha256.digest(file))
-  console.log(hash)
+  return hash
 }
 
 //addType()
@@ -125,6 +125,15 @@ async function init() {
   }, async function (argv) {
     let contract = await Contract.new(argv.accountId, argv.contractId)
     delType(contract, argv.type)
+  })
+  .command('hash [hash]', 'get code hash', (yargs) => {
+    yargs.positional('has', {
+      type: 'string',
+      default: 'normal',
+      describe: 'code hash'
+    })
+  }, async function (argv) {
+    console.log(await getHash(argv.hash))
   })
   .argv
 }

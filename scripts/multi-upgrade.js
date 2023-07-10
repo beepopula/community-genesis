@@ -26,23 +26,44 @@ class Contract {
     }
 
     async upgrade(code, contractId, migrate = false) {
-        await this.near.config.keyStore.setKey(nearConfig.networkId, contractId, this.signerKeyPair)
-        const account = await this.near.account(contractId)
+      await this.near.config.keyStore.setKey(nearConfig.networkId, contractId, this.signerKeyPair)
+      const account = await this.near.account(contractId)
+      try {
         await account.deployContract(code)
-        if (migrate) {
-          try {
-            await account.functionCall({
-              contractId,
-              methodName: "migrate", 
-              args: {}, 
-              gas: GAS, 
-              attachedDeposit: 0
-            })
-          } catch (e) {
-            return
-          }
-          
+      } catch (e) {
+        console.log(e)
+        console.log("upgrade error: ", contractId)
+        return
+      }
+        
+        
+      if (migrate) {
+        try {
+          await account.functionCall({
+            contractId,
+            methodName: "migrate", 
+            args: {}, 
+            gas: GAS, 
+            attachedDeposit: 0
+          })
+          // await account.functionCall({
+          //   contractId,
+          //   methodName: "set_args",
+          //   args: {
+          //     args: {
+          //       drip_contract: 'v2-drip.beepopula.testnet',
+          //     }
+          //   },
+          //   gas: GAS, 
+          //   attachedDeposit: 1
+          // })
+        } catch (e) {
+          console.log(e)
+          console.log("migrate error", contractId)
+          return
         }
+        
+      }
     }
 
 
@@ -66,17 +87,17 @@ class Contract {
 async function upgrade(type, envId, signerId, migrate = false) {
     let contract = await Contract.new(signerId)
     let file = fs.readFileSync(`../res/${type}.wasm`)
-    const data = await rp.get(`https://${envId}.popula.io/api/v1/communities/rank?page=0&limit=100&sort=down`)
+    const data = await rp.get(`https://${envId}.popula.io/api/v1/communities/rank?page=0&limit=300&sort=down`)
     const obj = JSON.parse(data)
     for (let community of obj.data) {
         const communityId = community.community_id
-        if (communityId == 'app.beepopula.testnet' || communityId == 'v10-app.bhc8521.testnet') {
+        if (communityId == 'app.beepopula.testnet' || communityId == 'v12-app.bhc8521.testnet') {
             continue
         }
         console.log('upgrading...  ' + communityId)
         await contract.upgrade(file, communityId, migrate)
     }
-    // await contract.upgrade(file, "nepbotnepbotnepbot.community-genesis2.bhc8521.testnet", migrate)
+    // await contract.upgrade(file, "valorant.community-genesis2.bhc8521.testnet", migrate)
 }
 
 async function init() {
