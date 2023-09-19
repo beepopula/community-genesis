@@ -16,17 +16,24 @@ const CREDENTIALS_DIR = '.near-credentials';
 const credentialsPath = path.join(homedir, CREDENTIALS_DIR);
 
 class Contract {
-
+    mainId
+    mainSignerKeyPair
     signerKeyPair
     near
   
-    constructor(signerKeyPair, near) {
+    constructor(mainId, mainSignerKeyPair, signerKeyPair, near) {
+      this.mainId = mainId
+      this.mainSignerKeyPair = mainSignerKeyPair
       this.signerKeyPair = signerKeyPair
       this.near = near
     }
 
     async upgrade(code, contractId, migrate = false) {
-      await this.near.config.keyStore.setKey(nearConfig.networkId, contractId, this.signerKeyPair)
+      if (contractId != this.mainId) {
+        await this.near.config.keyStore.setKey(nearConfig.networkId, contractId, this.signerKeyPair)
+      } else {
+        await this.near.config.keyStore.setKey(nearConfig.networkId, contractId, this.mainSignerKeyPair)
+      }
       const account = await this.near.account(contractId)
       try {
         await account.deployContract(code)
@@ -68,36 +75,51 @@ class Contract {
 
 
 
-    static async new(signerId) {
+    static async new(signerId, envId) {
         const signerKeyStore = new nearAPI.keyStores.UnencryptedFileSystemKeyStore(credentialsPath);
         const signerKeyPair = await signerKeyStore.getKey(nearConfig.networkId, signerId)
+        let mainId = "v13-app.bhc8521.testnet"
+        if (envId == "testnet") {
+          mainId = "app.beepopula.testnet"
+        }
+        const mainSignerKeyPair = await signerKeyStore.getKey(nearConfig.networkId, mainId)
     
         const keyStore = new nearAPI.keyStores.InMemoryKeyStore()
         const near = await nearAPI.connect({
             keyStore: keyStore,
             ...nearConfig
         });
-        //near.config.keyStore.getKey()
 
-        return new Contract(signerKeyPair, near)
+
+        return new Contract(mainId, mainSignerKeyPair, signerKeyPair, near)
     }
   
   }
 
+async function sleep(ms) {
+  await new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve()
+    }, ms)
+  })
+}
+
 async function upgrade(type, envId, signerId, migrate = false) {
     let contract = await Contract.new(signerId)
     let file = fs.readFileSync(`../res/${type}.wasm`)
-    const data = await rp.get(`https://${envId}.popula.io/api/v1/communities/rank?page=0&limit=300&sort=down`)
-    const obj = JSON.parse(data)
-    for (let community of obj.data) {
-        const communityId = community.community_id
-        if (communityId == 'app.beepopula.testnet' || communityId == 'v12-app.bhc8521.testnet') {
-            continue
-        }
-        console.log('upgrading...  ' + communityId)
-        await contract.upgrade(file, communityId, migrate)
-    }
-    // await contract.upgrade(file, "valorant.community-genesis2.bhc8521.testnet", migrate)
+    // const data = await rp.get(`https://${envId}.popula.io/api/v1/communities/rank?page=0&limit=400&sort=down`)
+    // const obj = JSON.parse(data)
+    // for (let community of obj.data) {
+    //     const communityId = community.community_id
+    //     console.log('upgrading...  ' + communityId)
+    //     contract.upgrade(file, communityId, migrate)
+    //     await sleep(3000)
+    // }
+    // await contract.upgrade(file, "lacrovenft.community.beepopula.testnet", migrate)
+    // await contract.upgrade(file, "nepbot4near.community.beepopula.testnet", migrate)
+    // await contract.upgrade(file, "world4.community-genesis2.bhc8521.testnet", migrate)
+    // await contract.upgrade(file, "123.community.beepopula.testnet", migrate)
+    // await contract.upgrade(file, "corn-and-cex.community.beepopula.testnet", migrate)
 }
 
 async function init() {

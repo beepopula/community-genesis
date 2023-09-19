@@ -9,7 +9,7 @@ use crate::utils::refund_extra_storage_deposit;
 impl CommunityGenesis {
     #[private]
     #[payable]
-    pub fn on_add_community(&mut self, contract_id: AccountId, community_type: String, owner_id: AccountId) {
+    pub fn on_add_community(&mut self, contract_id: AccountId, community_type: String, owner_id: AccountId, options: Option<HashMap<String, String>>) {
         match env::promise_result(0) {
             PromiseResult::Successful(_) => {
                 
@@ -23,6 +23,12 @@ impl CommunityGenesis {
                 let mut owner_communities = self.accounts.get(&owner_id).unwrap_or(Vec::new());
                 owner_communities.push(contract_id);
                 self.accounts.insert(&owner_id, &owner_communities);
+
+                if get_env() == "testnet" {
+                    let options = options.clone().expect("not allowed");
+                    let nonce = options.get("nonce").unwrap();
+                    env::storage_write(nonce.as_bytes(), "1".as_bytes());
+                }
                 
             },
             _ => unimplemented!()

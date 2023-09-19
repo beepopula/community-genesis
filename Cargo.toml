@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 near-sdk = {version = "4.0.0-pre.4", features = ["unstable"]}
+ed25519-dalek = { version = "1.0.1", features = ["alloc"] }
 
 [profile.release]
 codegen-units = 1

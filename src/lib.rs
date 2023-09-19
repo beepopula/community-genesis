@@ -15,7 +15,7 @@ use near_sdk::serde_json::{json, self};
 use near_sdk::{env, near_bindgen, AccountId, log, bs58, PanicOnDefault, Promise, BorshStorageKey, CryptoHash, PublicKey};
 use near_sdk::collections::{LookupMap, UnorderedMap, Vector};
 
-use crate::utils::{refund_extra_storage_deposit, get_env};
+use crate::utils::{refund_extra_storage_deposit, get_env, verify};
 
 
 pub mod utils;
@@ -32,7 +32,8 @@ pub struct CommunityGenesis {
     codes: UnorderedMap<String, CodeInfo>,
     accounts: UnorderedMap<AccountId, Vec<AccountId>>,
     args: HashMap<String, String>,
-    account_storage_usage: u128
+    account_storage_usage: u128,
+    options: HashMap<String, String>,
 }
 
 #[near_bindgen]
@@ -40,9 +41,9 @@ pub struct CommunityGenesis {
 pub struct OldCommunityGenesis {
     owner_id: AccountId,
     communities: UnorderedMap<AccountId, Community>,
-    codes: UnorderedMap<String, OldCodeInfo>,
+    codes: UnorderedMap<String, CodeInfo>,
     accounts: UnorderedMap<AccountId, Vec<AccountId>>,
-    public_key: String,
+    args: HashMap<String, String>,
     account_storage_usage: u128
 }
 
@@ -89,19 +90,20 @@ const EXTRA_STORAGE_COST: u128 = 2_000_000_000_000_000_000_000_000;
 impl CommunityGenesis {
 
     #[init]
-    pub fn new(args: HashMap<String, String>) -> Self {
+    pub fn new(args: HashMap<String, String>, options: HashMap<String, String>) -> Self {
         Self {
             owner_id: env::predecessor_account_id(),
             communities: UnorderedMap::new(StorageKey::Communities),
             codes: UnorderedMap::new(StorageKey::Codes),
             accounts: UnorderedMap::new(StorageKey::Accounts),
             args,
+            options,
             account_storage_usage: 128
         }
     }
 
     #[init(ignore_state)]
-    pub fn migrate(args: HashMap<String, String>) -> Self {
+    pub fn migrate(options: HashMap<String, String>) -> Self {
         let old_contract: OldCommunityGenesis = env::state_read().unwrap();
         assert!(old_contract.owner_id == env::predecessor_account_id(), "owner only");
         let new_contract = CommunityGenesis {
@@ -109,15 +111,24 @@ impl CommunityGenesis {
             owner_id: old_contract.owner_id,
             communities: old_contract.communities,
             accounts: old_contract.accounts,
-            args,
+            args: old_contract.args,
+            options,
             account_storage_usage: old_contract.account_storage_usage
         };
         new_contract
     }
 
     #[payable]
-    pub fn deploy_community(&mut self, name: String, community_type: String) {
-        assert!(get_env() == "testnet", "testnet only");
+    pub fn deploy_community(&mut self, name: String, community_type: String, options: Option<HashMap<String, String>>) {
+        if get_env() == "testnet" {
+            let options = options.clone().expect("not allowed");
+            let nonce = options.get("nonce").unwrap();
+            assert!(env::storage_has_key(nonce.as_bytes()) == false, "code already used");
+            let sign = options.get("sign").unwrap();
+            let sign = bs58::decode(sign).into_vec().unwrap();
+            let pk = bs58::decode(self.options.get("invite_pk").unwrap()).into_vec().unwrap();
+            assert!(verify(nonce.as_bytes(), &sign, &pk), "invalid code");
+        }
         let sender_id = env::predecessor_account_id();
         let code_info = self.codes.get(&community_type).unwrap();
         let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
@@ -140,6 +151,7 @@ impl CommunityGenesis {
                 "contract_id": contract_id,
                 "community_type": community_type,
                 "owner_id": sender_id,
+                "options": options
             }).to_string().into(), 0, (env::prepaid_gas() - env::used_gas()) / 3)
         );
     }
@@ -179,6 +191,17 @@ impl CommunityGenesis {
 
 #[cfg(test)]
 mod tests {
+    use near_sdk::bs58;
 
+    use crate::utils::verify;
+
+
+    #[test]
+    pub fn test_verify() {
+        let nonce = "G00MHfp2Km".to_string();
+        let sign = bs58::decode("ZdGAt1WdMn1nZ5Z8om2dJiqCCaSopbMAkgtkfFPTLDxyyzy3kkfXr679Af7SgXCNw7zbv9WPTqvNndPcyjJBiDm").into_vec().unwrap();
+        let pk = bs58::decode("6wE48MezRaLCu8RkTQ5RxQnKbqwZVqqtyj7DxVJdHfib").into_vec().unwrap();
+        assert!(verify(nonce.as_bytes(), &sign, &pk), "invalid code")
+    }
 
 }

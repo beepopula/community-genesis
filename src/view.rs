@@ -31,4 +31,8 @@ impl CommunityGenesis {
     pub fn get_code_types(&self) -> Vec<String> {
         self.codes.keys().collect()
     }
+
+    pub fn check_invite_code(&self, code: String) -> bool {
+        env::storage_has_key(code.as_bytes())
+    }
 }
