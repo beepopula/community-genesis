@@ -1,7 +1,7 @@
 // import "regenerator-runtime/runtime.js";
 const nearAPI = require("near-api-js");
 const getConfig = require("./config.js");
-const nearConfig = getConfig("development");
+const nearConfig = getConfig("mainnet");
 const fs = require('fs');
 const js_sha256 = require("js-sha256")
 const bs58 = require("bs58")

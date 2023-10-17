@@ -2,16 +2,28 @@ use near_sdk::PublicKey;
 
 use crate::*;
 
+//{"args": {"drip_contract": "drip4.bhc8521.testnet"},"options": {"pk": "BDLaJVnf4BGkm6iH2TmumaJsWymPytH7PheKqyfBqxVm","invite_pk": "6wE48MezRaLCu8RkTQ5RxQnKbqwZVqqtyj7DxVJdHfib"}}
+
 #[near_bindgen]
 impl CommunityGenesis {
     pub fn get_args(&self) -> HashMap<String, String> {
         self.args.clone()
     }
 
+    pub fn get_options(&self) -> HashMap<String, String> {
+        self.options.clone()
+    }
+
     pub fn set_args(&mut self, args: HashMap<String, String>) {
         let sender = env::predecessor_account_id();
         assert!(sender == self.owner_id, "owner only");
         self.args = args;
+    }
+
+    pub fn set_options(&mut self, options: HashMap<String, String>) {
+        let sender = env::predecessor_account_id();
+        assert!(sender == self.owner_id, "owner only");
+        self.options = options;
     }
 
     pub fn add_code_type(&mut self, community_type: String, length: u32, hash: Base58CryptoHash) {
@@ -52,13 +64,13 @@ impl CommunityGenesis {
         let code_info = self.codes.get(&community_type).unwrap();
         let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
         let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
-        let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST;
+        let storage_cost = 128 * env::storage_byte_cost() + u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST;
 
         assert!(env::attached_deposit() > storage_cost, "not enough deposit");
 
         Promise::new(contract_id.clone())
         .create_account()
-        .add_full_access_key(PublicKey::from_str(&self.args.get("public_key").unwrap()).unwrap())
+        .add_full_access_key(PublicKey::from_str(&self.options.get("pk").unwrap()).unwrap())
         .transfer(u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST)
         .deploy_contract(env::storage_read(&hash).unwrap())
         .function_call("new".into(), json!({

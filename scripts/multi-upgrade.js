@@ -2,7 +2,7 @@ const rp = require('request-promise')
 // import "regenerator-runtime/runtime.js";
 const nearAPI = require("near-api-js");
 const getConfig = require("./config.js");
-const nearConfig = getConfig("development");
+const nearConfig = getConfig("testnet");
 const fs = require('fs');
 const js_sha256 = require("js-sha256")
 const bs58 = require("bs58")
@@ -107,17 +107,17 @@ async function sleep(ms) {
 async function upgrade(type, envId, signerId, migrate = false) {
     let contract = await Contract.new(signerId)
     let file = fs.readFileSync(`../res/${type}.wasm`)
-    // const data = await rp.get(`https://${envId}.popula.io/api/v1/communities/rank?page=0&limit=400&sort=down`)
-    // const obj = JSON.parse(data)
-    // for (let community of obj.data) {
-    //     const communityId = community.community_id
-    //     console.log('upgrading...  ' + communityId)
-    //     contract.upgrade(file, communityId, migrate)
-    //     await sleep(3000)
-    // }
+    const data = await rp.get(`https://${envId}.popula.io/api/v1/communities/rank?page=0&limit=400&sort=down`)
+    const obj = JSON.parse(data)
+    for (let community of obj.data) {
+        const communityId = community.community_id
+        console.log('upgrading...  ' + communityId)
+        contract.upgrade(file, communityId, migrate)
+        await sleep(3000)
+    }
     // await contract.upgrade(file, "lacrovenft.community.beepopula.testnet", migrate)
     // await contract.upgrade(file, "nepbot4near.community.beepopula.testnet", migrate)
-    // await contract.upgrade(file, "world4.community-genesis2.bhc8521.testnet", migrate)
+    // await contract.upgrade(file, "world4meta1nft2.community-genesis2.bhc8521.testnet", migrate)
     // await contract.upgrade(file, "123.community.beepopula.testnet", migrate)
     // await contract.upgrade(file, "corn-and-cex.community.beepopula.testnet", migrate)
 }

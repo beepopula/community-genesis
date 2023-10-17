@@ -30,9 +30,7 @@ pub struct CommunityGenesis {
     owner_id: AccountId,
     communities: UnorderedMap<AccountId, Community>,
     codes: UnorderedMap<String, CodeInfo>,
-    accounts: UnorderedMap<AccountId, Vec<AccountId>>,
     args: HashMap<String, String>,
-    account_storage_usage: u128,
     options: HashMap<String, String>,
 }
 
@@ -75,14 +73,14 @@ pub struct OldCodeInfo {
     storage_deposit: U128
 }
 
-#[derive(BorshSerialize, BorshStorageKey)]
-#[derive(Debug)]
-pub enum StorageKey{
-    Communities,
-    Codes,
-    NewCodes,
-    Accounts
-}
+// #[derive(BorshSerialize, BorshStorageKey)]
+// #[derive(Debug)]
+// pub enum StorageKey{
+//     Communities,
+//     Codes,
+//     NewCodes,
+//     Accounts
+// }
 
 const EXTRA_STORAGE_COST: u128 = 2_000_000_000_000_000_000_000_000;
 
@@ -93,12 +91,10 @@ impl CommunityGenesis {
     pub fn new(args: HashMap<String, String>, options: HashMap<String, String>) -> Self {
         Self {
             owner_id: env::predecessor_account_id(),
-            communities: UnorderedMap::new(StorageKey::Communities),
-            codes: UnorderedMap::new(StorageKey::Codes),
-            accounts: UnorderedMap::new(StorageKey::Accounts),
+            communities: UnorderedMap::new(b'b'),
+            codes: UnorderedMap::new(b'a'),
             args,
             options,
-            account_storage_usage: 128
         }
     }
 
@@ -107,20 +103,18 @@ impl CommunityGenesis {
         let old_contract: OldCommunityGenesis = env::state_read().unwrap();
         assert!(old_contract.owner_id == env::predecessor_account_id(), "owner only");
         let new_contract = CommunityGenesis {
-            codes: UnorderedMap::new(StorageKey::NewCodes),
+            codes: UnorderedMap::new(b'a'),
             owner_id: old_contract.owner_id,
             communities: old_contract.communities,
-            accounts: old_contract.accounts,
             args: old_contract.args,
             options,
-            account_storage_usage: old_contract.account_storage_usage
         };
         new_contract
     }
 
     #[payable]
     pub fn deploy_community(&mut self, name: String, community_type: String, options: Option<HashMap<String, String>>) {
-        if get_env() == "testnet" {
+        if get_env() == "near" {
             let options = options.clone().expect("not allowed");
             let nonce = options.get("nonce").unwrap();
             assert!(env::storage_has_key(nonce.as_bytes()) == false, "code already used");
@@ -133,13 +127,13 @@ impl CommunityGenesis {
         let code_info = self.codes.get(&community_type).unwrap();
         let contract_id: AccountId = AccountId::from_str(&(name + "." + &env::current_account_id().to_string())).unwrap();
         let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
-        let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST;
+        let storage_cost = 128 * env::storage_byte_cost() + u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST;
 
         assert!(env::attached_deposit() > storage_cost, "not enough deposit");
 
         Promise::new(contract_id.clone())
         .create_account()
-        .add_full_access_key(PublicKey::from_str(&self.args.get("public_key").unwrap()).unwrap())
+        .add_full_access_key(PublicKey::from_str(&self.options.get("pk").unwrap()).unwrap())
         .transfer(u128::from(code_info.storage_deposit) + EXTRA_STORAGE_COST)
         .deploy_contract(env::storage_read(&hash).unwrap())
         .function_call("new".into(), json!({
@@ -164,7 +158,7 @@ impl CommunityGenesis {
         let code_info = self.codes.get(&community_type).unwrap();
         let hash: Vec<u8> = CryptoHash::from(code_info.hash).to_vec();
 
-        let storage_cost = self.account_storage_usage * env::storage_byte_cost() + u128::from(code_info.storage_deposit);
+        let storage_cost = 128 * env::storage_byte_cost() + u128::from(code_info.storage_deposit);
 
         assert!(env::attached_deposit() > storage_cost, "not enough deposit");
 

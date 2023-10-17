@@ -20,11 +20,8 @@ impl CommunityGenesis {
                     community_type: community_type.clone(),
                     code_hash: code_info.hash
                 });
-                let mut owner_communities = self.accounts.get(&owner_id).unwrap_or(Vec::new());
-                owner_communities.push(contract_id);
-                self.accounts.insert(&owner_id, &owner_communities);
 
-                if get_env() == "testnet" {
+                if get_env() == "near" {
                     let options = options.clone().expect("not allowed");
                     let nonce = options.get("nonce").unwrap();
                     env::storage_write(nonce.as_bytes(), "1".as_bytes());
